@@ -8,6 +8,6 @@ class AccountType(models.TextChoices):
 
 class PricingTiers(models.TextChoices):
     """ Pricing tiers. Subclass this to override with your own platform pricing tiers e.g. bronze, silver, golg etc. """
-    ONE = "ONE", "One"
-    TWO = "TWO", "Two"
-    THREE = "THREE", "Three"
+    S = "SMALL", "Small"
+    M = "MEDIUM", "Medium"
+    L = "LARGE", "Large"

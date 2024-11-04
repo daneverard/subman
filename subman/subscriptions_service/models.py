@@ -9,6 +9,7 @@ from .util.subscription_config import AccountType, PricingTiers
 logger = logging.get_logger(__name__)
 
 class SubscriptionAccount(models.Model):
+    name = models.CharField(max_length=255)
     invoicing_country = models.CharField(
         max_length=50,
         choices=CountryChoices.choices,
@@ -19,6 +20,8 @@ class SubscriptionAccount(models.Model):
         choices=CurrencyChoices.choices,
         default=country_to_currency[CountryChoices.DENMARK],
     )
+    def __str__(self):
+        return f"{self.name} ({self.invoicing_country},{self.invoicing_currency})"
 
 class Module(models.Model):
     """ Represents the configuration for an available module within the platform """
@@ -38,6 +41,9 @@ class Module(models.Model):
         except ObjectDoesNotExist:
             logger.WARN("No active pricing configuration!")
 
+    def __str__(self):
+        return self.name
+
 class AddOn(models.Model):
     """ Represents the configuration for all available add-ons for each module within the platform """
     name = models.CharField(max_length=255)
@@ -51,6 +57,9 @@ class AddOn(models.Model):
             return active_pricing
         except ObjectDoesNotExist:
             logger.WARN("No active pricing configuration!")
+    
+    def __str__(self):
+        return self.name
 
 class PricingConfiguration(models.Model):
     """ 
@@ -81,6 +90,14 @@ class PricingConfiguration(models.Model):
 
     def delete(self, *args, **kwargs):
         raise ValidationError("This record is read-only and cannot be deleted.")
+    
+    def __str__(self):
+        if self.module:
+            return f"{self.module.name}:{self.currency}:{self.tier}:{self.effective_date}"
+        elif self.add_on:
+            return f"{self.add_on.name}:{self.currency}:{self.tier}:{self.effective_date}"
+        else:
+            return f"NO MODULE:{self.currency}:{self.tier}:{self.effective_date}"
 
 class SubscriptionPlan(models.Model):
     account = models.ForeignKey(SubscriptionAccount, on_delete=models.PROTECT)
@@ -92,6 +109,9 @@ class SubscriptionPlan(models.Model):
     is_monthly = models.BooleanField(default=True)  # True for monthly, False for annual
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.account.name}:{self.tier}:{self.start_date}"
 
 class PlanModule(models.Model):
     plan = models.ForeignKey(SubscriptionPlan, on_delete=models.PROTECT)
@@ -107,6 +127,9 @@ class PlanModule(models.Model):
             self.pricing = active_pricing
             self.save()
 
+    def __str__(self):
+        return f"{self.plan}:{self.module.name}"
+    
 class PlanModuleSelectedAddon(models.Model):
     plan_module = models.ForeignKey(PlanModule, on_delete=models.PROTECT)
     add_on = models.ForeignKey(AddOn, on_delete=models.PROTECT)
@@ -120,3 +143,6 @@ class PlanModuleSelectedAddon(models.Model):
         if active_pricing:
             self.pricing = active_pricing
             self.save()
+    
+    def __str__(self):
+        return f"{self.plan_module}:{self.add_on.name}"
