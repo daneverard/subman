@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.utils.text import slugify
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from .util import logging
 from .util.country_currency import country_to_currency, CountryChoices, CurrencyChoices
