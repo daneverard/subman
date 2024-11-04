@@ -26,6 +26,13 @@ class SubscriptionAccount(models.Model):
 class Module(models.Model):
     """ Represents the configuration for an available module within the platform """
     name = models.CharField(max_length=255)
+    parent = models.ForeignKey(
+        'self', 
+        null=True, 
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name='submodules'
+        )
     description = models.TextField(blank=True)
     applicable_account_type = models.CharField(
         max_length=50,
@@ -42,24 +49,7 @@ class Module(models.Model):
             logger.WARN("No active pricing configuration!")
 
     def __str__(self):
-        return self.name
-
-class AddOn(models.Model):
-    """ Represents the configuration for all available add-ons for each module within the platform """
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
-    module = models.ForeignKey(Module, on_delete=models.PROTECT, related_name='addons')
-
-    def get_active_pricing(self):
-        today = timezone.now().date()
-        try:
-            active_pricing = PricingConfiguration.objects.filter(add_on=self, effective_date__lte=today).order_by('-effective_date').first()
-            return active_pricing
-        except ObjectDoesNotExist:
-            logger.WARN("No active pricing configuration!")
-    
-    def __str__(self):
-        return self.name
+        return f"{self.parent}.{self.name}" if self.parent else self.name
 
 class PricingConfiguration(models.Model):
     """ 
@@ -68,7 +58,6 @@ class PricingConfiguration(models.Model):
     An account's pricing will be based upon a specific instance of the pricing, to be updated when a plan renews
     """
     module = models.ForeignKey(Module, null=True, blank=True, on_delete=models.PROTECT)
-    add_on = models.ForeignKey(AddOn, null=True, blank=True, on_delete=models.PROTECT)
     currency = models.CharField(
         max_length=3,
         choices=CurrencyChoices.choices,
@@ -92,12 +81,8 @@ class PricingConfiguration(models.Model):
         raise ValidationError("This record is read-only and cannot be deleted.")
     
     def __str__(self):
-        if self.module:
-            return f"{self.module.name}:{self.currency}:{self.tier}:{self.effective_date}"
-        elif self.add_on:
-            return f"{self.add_on.name}:{self.currency}:{self.tier}:{self.effective_date}"
-        else:
-            return f"NO MODULE:{self.currency}:{self.tier}:{self.effective_date}"
+        return f"{self.module}:{self.currency}:{self.tier}:{self.effective_date}"
+
 
 class SubscriptionPlan(models.Model):
     account = models.ForeignKey(SubscriptionAccount, on_delete=models.PROTECT)
@@ -129,20 +114,3 @@ class PlanModule(models.Model):
 
     def __str__(self):
         return f"{self.plan}:{self.module.name}"
-    
-class PlanModuleSelectedAddon(models.Model):
-    plan_module = models.ForeignKey(PlanModule, on_delete=models.PROTECT)
-    add_on = models.ForeignKey(AddOn, on_delete=models.PROTECT)
-    pricing = models.ForeignKey(PricingConfiguration, on_delete=models.PROTECT)
-    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    custom_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-
-    def update_base_pricing(self):
-        # Find the most recent PricingConfiguration instance where effective_date <= today
-        active_pricing = self.add_on.get_active_pricing()
-        if active_pricing:
-            self.pricing = active_pricing
-            self.save()
-    
-    def __str__(self):
-        return f"{self.plan_module}:{self.add_on.name}"
