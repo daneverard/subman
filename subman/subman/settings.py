@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-2giz6hlu(e_6c+bm406g2(og_ho4_0u+fim@8m@#qvw$1suc@g
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
+SYSTEM_NAME = "SUBMAN"
 
 # Application definition
 

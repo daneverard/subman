@@ -85,6 +85,7 @@ class PricingConfiguration(models.Model):
 class SubscriptionPlan(models.Model):
     account = models.ForeignKey(SubscriptionAccount, on_delete=models.PROTECT)
     tier = models.CharField(
+        max_length=50,
         choices=PricingTiers.choices,
         default=PricingTiers.choices[0][0],
     )
