@@ -25,7 +25,7 @@ class SubscriptionAccount(models.Model):
 
 class Module(models.Model):
     """ Represents the configuration for an available module within the platform """
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     parent = models.ForeignKey(
         'self', 
         null=True, 
@@ -39,6 +39,23 @@ class Module(models.Model):
         choices=AccountType.choices,
         default=AccountType.choices[0][0],
     )
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            # Generate a slug from the name field
+            base_slug = slugify(self.name)
+            slug = base_slug
+            num = 2
+
+            # Ensure the slug is unique by appending a number if it already exists
+            while Module.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{num}"
+                num += 1
+
+            self.slug = slug
+
+        super().save(*args, **kwargs)
 
     def get_active_pricing(self):
         today = timezone.now().date()

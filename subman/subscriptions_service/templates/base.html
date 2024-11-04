@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Management</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Subscription Management App</h1>
+        <nav>
+            <a href="{% url 'account_list' %}">Accounts</a> |
+            <a href="{% url 'module_list' %}">Modules</a> |
+            <a href="{% url 'pricing_list' %}">Pricing</a>
+        </nav>
+        <hr>
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

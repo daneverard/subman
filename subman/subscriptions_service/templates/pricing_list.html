@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Pricing Configurations</h2>
+<a href="{% url 'pricing_create' %}">Add New Pricing Configuration</a>
+<ul>
+    {% for pricing in pricings %}
+    <li>{{ pricing.module }} - {{ pricing.currency }} - {{ pricing.tier }} - {{ pricing.monthly_price }}/mo - {{ pricing.annual_price }}/yr</li>
+    {% endfor %}
+</ul>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Subscription Accounts</h2>
+<a href="{% url 'account_create' %}">Add New Account</a>
+<ul>
+    {% for account in accounts %}
+    <li>{{ account.name }} ({{ account.invoicing_country }}, {{ account.invoicing_currency }})</li>
+    {% endfor %}
+</ul>
+{% endblock %}
