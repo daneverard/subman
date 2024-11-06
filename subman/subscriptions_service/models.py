@@ -45,7 +45,7 @@ class Module(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             # Generate a slug from the name field
-            base_slug = slugify(self.name)
+            base_slug = slugify(self.name).upper()
             slug = base_slug
             num = 2
 
