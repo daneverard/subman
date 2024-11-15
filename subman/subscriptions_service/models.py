@@ -21,6 +21,20 @@ class SubscriptionAccount(models.Model):
         choices=CurrencyChoices.choices,
         default=country_to_currency[CountryChoices.DENMARK],
     )
+    account_type = models.CharField(
+        max_length=50,
+        choices=AccountType.choices,
+        default=AccountType.choices[0][0],
+    )
+
+    @staticmethod
+    def get_active_modules_for_account(account: SubscriptionAccount):
+        plans = SubscriptionPlan.objects.filter(account=account)
+        modules = PlanModule.objects.filter(
+                plan__in = plans
+            )
+        return [module.slug for module in modules]
+
     def __str__(self):
         return f"{self.name} ({self.invoicing_country},{self.invoicing_currency})"
 
@@ -41,6 +55,26 @@ class Module(models.Model):
         default=AccountType.choices[0][0],
     )
     slug = models.SlugField(max_length=255, unique=True, blank=True)
+
+    @staticmethod
+    def get_available_modules_for_account_list(account: SubscriptionAccount):
+        """Get a list of available module slugs for a given account."""
+        try:
+            modules = Module.objects.filter(
+                applicable_account_type=account.account_type
+            )
+            return [module.slug for module in modules]
+        except ObjectDoesNotExist:
+            return []
+
+    @staticmethod
+    def get_all_available_modules_list():
+        """Get a list of all module slugs."""
+        try:
+            modules = Module.objects.all()
+            return [module.slug for module in modules]
+        except ObjectDoesNotExist:
+            return []
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -113,6 +147,10 @@ class SubscriptionPlan(models.Model):
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
     
+    @property
+    def is_active(self):
+        return self.start_date < timezone.now().date() < self.end_date if self.end_date else self.start_date < timezone.now().date()
+
     def __str__(self):
         return f"{self.account.name}:{self.tier}:{self.start_date}"
 
