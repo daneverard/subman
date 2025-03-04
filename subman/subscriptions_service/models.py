@@ -27,9 +27,8 @@ class SubscriptionAccount(models.Model):
         default=AccountType.choices[0][0],
     )
 
-    @staticmethod
-    def get_active_modules_for_account(account: SubscriptionAccount):
-        plans = SubscriptionPlan.objects.filter(account=account)
+    def get_active_modules_for_account(self):
+        plans = SubscriptionPlan.objects.filter(account=self)
         modules = PlanModule.objects.filter(
                 plan__in = plans
             )
@@ -134,7 +133,6 @@ class PricingConfiguration(models.Model):
     
     def __str__(self):
         return f"{self.module}:{self.currency}:{self.tier}:{self.effective_date}"
-
 
 class SubscriptionPlan(models.Model):
     account = models.ForeignKey(SubscriptionAccount, on_delete=models.PROTECT)
